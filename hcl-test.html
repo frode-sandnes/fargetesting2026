@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HCL Color Trainer</title>
+    <style>
+        :root {
+            --dark-bg: #1a1a1a;
+            --dark-light-bg: #222;
+            --text-color: #f0f0f0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 700px;
+            background-color: var(--dark-light-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--text-color);
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+
+        p.progress {
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            font-style: italic;
+            color: #ccc;
+        }
+
+        .color-display-container {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            align-items: center;
+        }
+
+        .color-box {
+            width: 120px;
+            height: 120px;
+            border-radius: 10px;
+            border: 2px solid var(--text-color);
+            transition: background-color 0.3s;
+        }
+
+        .color-label {
+            font-size: 1.1em;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        .slider-container {
+            margin-bottom: 25px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 12px;
+            border-radius: 6px;
+            outline: none;
+            transition: opacity .2s;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: var(--text-color);
+            cursor: pointer;
+            border: 3px solid #333;
+        }
+        
+        #hue-slider { background: linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000); }
+        #chroma-slider { background: linear-gradient(to right, #808080, #ff0000); }
+        #lightness-slider { background: linear-gradient(to right, #000, #fff); }
+
+        .difference {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-top: 20px;
+            color: #888;
+        }
+
+        #difference-value {
+            color: var(--text-color);
+        }
+
+        .button-container {
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: var(--dark-bg);
+            background-color: var(--text-color);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            background-color: #ccc;
+            transform: translateY(-2px);
+        }
+
+        .results-container {
+            padding: 40px;
+            background-color: var(--dark-light-bg);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+        
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .results-table th, .results-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #444;
+        }
+
+        .results-table th {
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .results-table td {
+            color: #ccc;
+        }
+
+        .color-swatch-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .color-swatch {
+            width: 40px;
+            height: 40px;
+            border-radius: 5px;
+            border: 1px solid #555;
+        }
+
+        .avg-results {
+            margin-top: 30px;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+    </style>
+     <script src="submitToForm.js"></script>
+     <script src="nickname.js"></script>
+</head>
+<body>
+
+    <div class="container" id="training-app">
+        <h1>HCL Color Trainer 🎨</h1>
+        <p class="progress" id="progress-text"></p>
+
+        <div class="color-display-container">
+            <div>
+                <div class="color-box" id="test-color-box"></div>
+                <div class="color-label">Test Color</div>
+            </div>
+            <div>
+                <div class="color-box" id="user-color-box"></div>
+                <div class="color-label">Your Color</div>
+            </div>
+        </div>
+
+        <div class="slider-container">
+            <div class="slider-label">
+                <span>Hue (H): <span id="hue-value">0</span>°</span>
+            </div>
+            <input type="range" id="hue-slider" min="0" max="360" value="0">
+        </div>
+
+        <div class="slider-container">
+            <div class="slider-label">
+                <span>Chroma (C): <span id="chroma-value">0</span></span>
+            </div>
+            <input type="range" id="chroma-slider" min="0" max="100" value="0">
+        </div>
+
+        <div class="slider-container">
+            <div class="slider-label">
+                <span>Lightness (L): <span id="lightness-value">0</span></span>
+            </div>
+            <input type="range" id="lightness-slider" min="0" max="100" value="0">
+        </div>
+
+        <div class="difference">
+            Perceived Difference: <span id="difference-value">Calculating...</span>
+        </div>
+        
+        <div class="button-container">
+            <button id="next-button">Next Color</button>
+        </div>
+    </div>
+
+    <div class="container results-container" id="results-page" style="display:none;">
+        <h1>Results 🏆 for <span id="nickname" style="color: yellow;"></span></h1>
+        <p>Here are your results for the color training exercises.</p>
+        <table class="results-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Test Color Sample</th>
+                    <th>Test Color HCL</th>
+                    <th>Your Color Sample</th>
+                    <th>Your Color HCL</th>
+                    <th>Difference</th>
+                    <th>Adjustments</th>
+                    <th>Time (s)</th>
+                </tr>
+            </thead>
+            <tbody id="results-table-body">
+            </tbody>
+        </table>
+        <div class="avg-results">
+            <p>Average Difference: <span id="avg-diff"></span></p>
+            <p>Average Adjustments: <span id="avg-adjustments"></span></p>
+            <p>Average Time: <span id="avg-time"></span>s</p>
+        </div>
+    </div>
+
+    <script>
+
+   /**
+     * Converts HCL (CIE LCH) values [H, C, L] to standard RGB string.
+     * H: Hue angle [0, 360°]
+     * C: Chroma [0, ~100]
+     * L: Luminance / Lightness [0, 100%]
+     */
+    function hclToRgb(h, c, l) {
+        // convert to numbers
+        h = Number(h);
+        c = Number(c);
+        l = Number(l);
+      // 1. Convert LCH to CIE Lab
+      const rad = (h * Math.PI) / 180;
+      const a = c * Math.cos(rad);
+      const b = c * Math.sin(rad);
+
+      // 2. Convert Lab to XYZ (Illuminant D65)
+      let y = (l + 16) / 116;
+      let x = a / 500 + y;
+      let z = y - b / 200;
+
+      const x3 = Math.pow(x, 3);
+      const y3 = Math.pow(y, 3);
+      const z3 = Math.pow(z, 3);
+
+      x = (x3 > 0.008856 ? x3 : (x - 16 / 116) / 7.787) * 0.95047;
+      y = (y3 > 0.008856 ? y3 : (y - 16 / 116) / 7.787) * 1.00000;
+      z = (z3 > 0.008856 ? z3 : (z - 16 / 116) / 7.787) * 1.08883;
+
+      // 3. Convert XYZ to linear sRGB
+      let rLin = x * 3.2406 + y * -1.5372 + z * -0.4986;
+      let gLin = x * -0.9689 + y * 1.8758 + z * 0.0415;
+      let bLin = x * 0.0557 + y * -0.2040 + z * 1.0570;
+
+      // 4. Gamma correction
+      const gamma = (val) => val <= 0.0031308 ? 12.92 * val : 1.055 * Math.pow(val, 1 / 2.4) - 0.055;
+      
+      let r = Math.round(Math.min(Math.max(0, gamma(rLin)), 1) * 255);
+      let g = Math.round(Math.min(Math.max(0, gamma(gLin)), 1) * 255);
+      let bComp = Math.round(Math.min(Math.max(0, gamma(bLin)), 1) * 255);
+
+      return `rgb(${r}, ${g}, ${bComp})`;
+    }
+
+    /**
+     * Generates an array of 100 distinct HCL arrays [H, C, L].
+     * Uses Golden Ratio hue stepping to achieve uniform spatial separation across 360 degrees.
+     */
+    function generate100HCLColors() {
+      const colors = [];
+      const goldenRatioConjugate = 0.618033988749895;
+      let hueFraction = 0.125; // initial hue offset
+
+      for (let i = 0; i < 100; i++) {
+        hueFraction = (hueFraction + goldenRatioConjugate) % 1;
+        const h = Math.round(hueFraction * 360 * 10) / 10;
+        
+        // Modulate Chroma & Lightness slightly to maximize contrast while staying in-gamut
+        const c = Math.round((55 + (i % 5) * 7) * 10) / 10;   // Chroma: 55 to 83
+        const l = Math.round((48 + (i % 4) * 9) * 10) / 10;   // Luminance: 48 to 75 %
+
+        colors.push([Math.round(h), c, l]);
+      }
+      return colors;
+    }
+
+
+    // Fisher-Yates shuffle to pick a random subset without mutation
+    function selectSet(numColors, colorArray) {
+      const copy = [...colorArray];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy.slice(0, Math.min(numColors, colorArray.length));
+    }
+
+        const basePalette = generate100HCLColors();
+        const testColors = selectSet(5, basePalette); 
+//console.log(basePalette)
+
+        // moved from static below to dynamic above
+    /*    const testColors = [
+            [30, 80, 50],   // Orange
+            [220, 80, 50],  // Blue
+            [80, 80, 50],   // Green
+            [300, 70, 60],  // Magenta
+            [160, 60, 40]   // Cyan
+        ];*/
+
+        let currentTest = 0;
+        let testStartTime;
+        let sliderAdjustments = 0;
+        const results = [];
+        const numTests = testColors.length;
+
+        const testColorBox = document.getElementById('test-color-box');
+        const userColorBox = document.getElementById('user-color-box');
+        const hueSlider = document.getElementById('hue-slider');
+        const chromaSlider = document.getElementById('chroma-slider');
+        const lightnessSlider = document.getElementById('lightness-slider');
+        const hueValueSpan = document.getElementById('hue-value');
+        const chromaValueSpan = document.getElementById('chroma-value');
+        const lightnessValueSpan = document.getElementById('lightness-value');
+        const differenceValueSpan = document.getElementById('difference-value');
+        const nextButton = document.getElementById('next-button');
+        const progressText = document.getElementById('progress-text');
+        const trainingApp = document.getElementById('training-app');
+        const resultsPage = document.getElementById('results-page');
+        const resultsTableBody = document.getElementById('results-table-body');
+        const avgDiffSpan = document.getElementById('avg-diff');
+        const avgAdjustmentsSpan = document.getElementById('avg-adjustments');
+        const avgTimeSpan = document.getElementById('avg-time');
+        const submitLink = document.getElementById('submit-link');
+
+        // HCL to Lab conversion
+        function hclToLab(h, c, l) {
+            const hRad = h * Math.PI / 180;
+            const a = c * Math.cos(hRad);
+            const b = c * Math.sin(hRad);
+            return [l, a, b];
+        }
+
+        // RGB to LAB conversion
+        function rgbToLab(r, g, b) {
+            let var_R = (r / 255);
+            let var_G = (g / 255);
+            let var_B = (b / 255);
+            if (var_R > 0.04045) var_R = Math.pow(((var_R + 0.055) / 1.055), 2.4); else var_R = var_R / 12.92;
+            if (var_G > 0.04045) var_G = Math.pow(((var_G + 0.055) / 1.055), 2.4); else var_G = var_G / 12.92;
+            if (var_B > 0.04045) var_B = Math.pow(((var_B + 0.055) / 1.055), 2.4); else var_B = var_B / 12.92;
+            var_R = var_R * 100;
+            var_G = var_G * 100;
+            var_B = var_B * 100;
+            const X = var_R * 0.4124 + var_G * 0.3576 + var_B * 0.1805;
+            const Y = var_R * 0.2126 + var_G * 0.7152 + var_B * 0.0722;
+            const Z = var_R * 0.0193 + var_G * 0.1192 + var_B * 0.9505;
+            const ref_X = 95.047;
+            const ref_Y = 100.000;
+            const ref_Z = 108.883;
+            let var_X = X / ref_X;
+            let var_Y = Y / ref_Y;
+            let var_Z = Z / ref_Z;
+            if (var_X > 0.008856) var_X = Math.pow(var_X, (1/3)); else var_X = (7.787 * var_X) + (16 / 116);
+            if (var_Y > 0.008856) var_Y = Math.pow(var_Y, (1/3)); else var_Y = (7.787 * var_Y) + (16 / 116);
+            if (var_Z > 0.008856) var_Z = Math.pow(var_Z, (1/3)); else var_Z = (7.787 * var_Z) + (16 / 116);
+            const L = (116 * var_Y) - 16;
+            const a = 500 * (var_X - var_Y);
+            const b_lab = 200 * (var_Y - var_Z);
+            return [L, a, b_lab];
+        }
+
+        // LAB to RGB conversion
+        function labToRgb(L, a, b) {
+            const ref_X = 95.047;
+            const ref_Y = 100.000;
+            const ref_Z = 108.883;
+            let var_Y = (L + 16) / 116;
+            let var_X = a / 500 + var_Y;
+            let var_Z = var_Y - b / 200;
+            if (Math.pow(var_Y, 3) > 0.008856) var_Y = Math.pow(var_Y, 3); else var_Y = (var_Y - 16 / 116) / 7.787;
+            if (Math.pow(var_X, 3) > 0.008856) var_X = Math.pow(var_X, 3); else var_X = (var_X - 16 / 116) / 7.787;
+            if (Math.pow(var_Z, 3) > 0.008856) var_Z = Math.pow(var_Z, 3); else var_Z = (var_Z - 16 / 116) / 7.787;
+            const X = var_X * ref_X;
+            const Y = var_Y * ref_Y;
+            const Z = var_Z * ref_Z;
+            let var_R = X * 0.032406 + Y * -0.015372 + Z * -0.004986;
+            let var_G = X * -0.096900 + Y * 0.187596 + Z * 0.004156;
+            let var_B = X * 0.000922 + Y * -0.002568 + Z * 0.012543;
+            if (var_R > 0.0031308) var_R = 1.055 * Math.pow(var_R, (1 / 2.4)) - 0.055; else var_R = 12.92 * var_R;
+            if (var_G > 0.0031308) var_G = 1.055 * Math.pow(var_G, (1 / 2.4)) - 0.055; else var_G = 12.92 * var_G;
+            if (var_B > 0.0031308) var_B = 1.055 * Math.pow(var_B, (1 / 2.4)) - 0.055; else var_B = 12.92 * var_B;
+            let R = Math.round(var_R * 255);
+            let G = Math.round(var_G * 255);
+            let B = Math.round(var_B * 255);
+            R = Math.min(255, Math.max(0, R));
+            G = Math.min(255, Math.max(0, G));
+            B = Math.min(255, Math.max(0, B));
+            return [R, G, B];
+        }
+
+        // Calculate Delta E 2000
+        function deltaE(lab1, lab2) {
+            const [L1, a1, b1] = lab1;
+            const [L2, a2, b2] = lab2;
+            const dL = L2 - L1;
+            const C1 = Math.sqrt(a1*a1 + b1*b1);
+            const C2 = Math.sqrt(a2*a2 + b2*b2);
+            const dC = C2 - C1;
+            const dH = Math.sqrt(Math.max(0, (a1-a2)*(a1-a2) + (b1-b2)*(b1-b2) - dC*dC));
+            const sL = 1;
+            const sC = 1 + 0.045 * C1;
+            const sH = 1 + 0.015 * C1;
+            const deltaE = Math.sqrt(Math.pow(dL/sL, 2) + Math.pow(dC/sC, 2) + Math.pow(dH/sH, 2));
+            return deltaE.toFixed(2);
+        }
+
+        function updateSliderBackgrounds() {
+            const h = hueSlider.value;
+            const c = chromaSlider.value;
+            const l = lightnessSlider.value;
+
+            // Update Chroma slider gradient based on current Hue
+            const [r_c_start, g_c_start, b_c_start] = labToRgb(...hclToLab(h, 0, l));
+            const [r_c_end, g_c_end, b_c_end] = labToRgb(...hclToLab(h, 100, l));
+            chromaSlider.style.background = `linear-gradient(to right, rgb(${r_c_start}, ${g_c_start}, ${b_c_start}), rgb(${r_c_end}, ${g_c_end}, ${b_c_end}))`;
+
+            // Update Lightness slider gradient based on current Hue and Chroma
+            const [r_l_start, g_l_start, b_l_start] = labToRgb(...hclToLab(h, c, 0));
+            const [r_l_end, g_l_end, b_l_end] = labToRgb(...hclToLab(h, c, 100));
+            lightnessSlider.style.background = `linear-gradient(to right, rgb(${r_l_start}, ${g_l_start}, ${b_l_start}), rgb(${r_l_end}, ${g_l_end}, ${b_l_end}))`;
+        }
+
+        function updateColorsAndDifference() {
+            const h = parseInt(hueSlider.value);
+            const c = parseInt(chromaSlider.value);
+            const l = parseInt(lightnessSlider.value);
+
+            hueValueSpan.textContent = h;
+            chromaValueSpan.textContent = c;
+            lightnessValueSpan.textContent = l;
+            
+//            const [r, g, b] = labToRgb(...hclToLab(h, c, l));
+       ///  const [r, g, b] = hclToRgb(h, c, l);
+            userColorBox.style.backgroundColor = hclToRgb(h, c, l);
+          ///  userColorBox.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+
+            const testHCL = testColors[currentTest];
+            const testLab = hclToLab(...testHCL);
+            const userLab = hclToLab(h, c, l);
+            
+            const difference = deltaE(testLab, userLab);
+            differenceValueSpan.textContent = difference;
+            
+            updateSliderBackgrounds();
+
+            if (parseFloat(difference) <= 2.5) {
+                setTimeout(() => nextColorTest(), 500);
+            }
+        }
+
+        function initializeTest() {
+            if (currentTest < numTests) {
+                const [h, c, l] = testColors[currentTest];
+                //const [r, g, b] = labToRgb(...hclToLab(h, c, l));
+//console.log(testColors)
+//console.log({h,c,l})                
+//        const [r, g, b] = hclToRgb(h, c, l);
+        testColorBox.style.backgroundColor = hclToRgb(h, c, l);
+   //             testColorBox.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+                
+                hueSlider.value = 0;
+                chromaSlider.value = 0;
+                lightnessSlider.value = 0;
+                updateColorsAndDifference();
+                
+                progressText.textContent = `Test ${currentTest + 1} of ${numTests}`;
+                sliderAdjustments = 0;
+                testStartTime = Date.now();
+                nextButton.disabled = false;
+            } else {
+                showResults();
+            }
+        }
+
+        function nextColorTest() {
+            const h = parseInt(hueSlider.value);
+            const c = parseInt(chromaSlider.value);
+            const l = parseInt(lightnessSlider.value);
+            const userHCL = [h, c, l];
+            const testHCL = testColors[currentTest];
+            const testLab = hclToLab(...testHCL);
+            const userLab = hclToLab(...userHCL);
+            const difference = parseFloat(deltaE(testLab, userLab));
+            const timeElapsed = ((Date.now() - testStartTime) / 1000).toFixed(2);
+
+            results.push({
+                testNumber: currentTest + 1,
+                testHCL,
+                userHCL,
+                difference,
+                adjustments: sliderAdjustments,
+                time: parseFloat(timeElapsed)
+            });
+
+            currentTest++;
+            if (currentTest < numTests) {
+                initializeTest();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            trainingApp.style.display = 'none';
+            resultsPage.style.display = 'block';
+
+            let totalDiff = 0;
+            let totalAdjustments = 0;
+            let totalTime = 0;
+//            let queryString = 'http://nettskjema.no/frode/?';
+
+            const id = getId();
+            const json = {id, results}; 
+            submitToForm("hcl-test", json);
+            // put in summary
+            document.getElementById("nickname").textContent = `"${id}"`;
+
+            results.forEach((res, index) => {
+                const row = resultsTableBody.insertRow();
+                
+                row.insertCell(0).textContent = res.testNumber;
+
+                const testColorSampleCell = row.insertCell(1);
+             //   const testRgb = labToRgb(...hclToLab(...res.testHCL));
+        const testRgb = hclToRgb(...res.testHCL);  
+        console.log(testRgb)              
+                testColorSampleCell.innerHTML = `<div class="color-swatch" style="background-color: ${testRgb};"></div>`;
+//                testColorSampleCell.innerHTML = `<div class="color-swatch" style="background-color: rgb(${testRgb[0]}, ${testRgb[1]}, ${testRgb[2]});"></div>`;
+                row.insertCell(2).textContent = res.testHCL.join(', ');
+
+                const userColorSampleCell = row.insertCell(3);
+            const userRgb = hclToRgb(...res.userHCL);  
+//                const userRgb = labToRgb(...hclToLab(...res.userHCL));
+                userColorSampleCell.innerHTML = `<div class="color-swatch" style="background-color: ${userRgb};"></div>`;
+//                userColorSampleCell.innerHTML = `<div class="color-swatch" style="background-color: rgb(${userRgb[0]}, ${userRgb[1]}, ${userRgb[2]});"></div>`;
+                row.insertCell(4).textContent = res.userHCL.join(', ');
+
+                row.insertCell(5).textContent = res.difference;
+                row.insertCell(6).textContent = res.adjustments;
+                row.insertCell(7).textContent = res.time;
+
+                totalDiff += res.difference;
+                totalAdjustments += res.adjustments;
+                totalTime += res.time;
+            });
+            
+            const avgRow = resultsTableBody.insertRow();
+            avgRow.style.fontWeight = 'bold';
+            avgRow.insertCell(0).textContent = 'Average';
+            avgRow.insertCell(1).textContent = ''; 
+            avgRow.insertCell(2).textContent = ''; 
+            avgRow.insertCell(3).textContent = ''; 
+            avgRow.insertCell(4).textContent = ''; 
+            avgRow.insertCell(5).textContent = (totalDiff / numTests).toFixed(2);
+            avgRow.insertCell(6).textContent = (totalAdjustments / numTests).toFixed(2);
+            avgRow.insertCell(7).textContent = (totalTime / numTests).toFixed(2);
+            
+            avgDiffSpan.textContent = (totalDiff / numTests).toFixed(2);
+            avgAdjustmentsSpan.textContent = (totalAdjustments / numTests).toFixed(2);
+            avgTimeSpan.textContent = (totalTime / numTests).toFixed(2);
+        }
+
+        const sliders = [hueSlider, chromaSlider, lightnessSlider];
+        sliders.forEach(slider => {
+            slider.addEventListener('input', () => { 
+                sliderAdjustments++; 
+                updateColorsAndDifference(); 
+            });
+        });
+
+        nextButton.addEventListener('click', nextColorTest);
+
+        initializeTest();
+    </script>
+</body>
+</html>

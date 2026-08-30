@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RGB Color Trainer</title>
+    <style>
+        :root {
+            --dark-bg: #1a1a1a;
+            --dark-light-bg: #222;
+            --text-color: #f0f0f0;
+            --accent-red: #ff4d4d;
+            --accent-green: #4dff4d;
+            --accent-blue: #4d4dff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 700px;
+            background-color: var(--dark-light-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--text-color);
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+
+        p.progress {
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            font-style: italic;
+            color: #ccc;
+        }
+
+        .color-display-container {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            align-items: center;
+        }
+
+        .color-box {
+            width: 120px;
+            height: 120px;
+            border-radius: 10px;
+            border: 2px solid var(--text-color);
+            transition: background-color 0.3s;
+        }
+
+        .color-label {
+            font-size: 1.1em;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        .slider-container {
+            margin-bottom: 25px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 12px;
+            border-radius: 6px;
+            outline: none;
+            transition: opacity .2s;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: var(--text-color);
+            cursor: pointer;
+            border: 3px solid #333;
+        }
+
+        #red-slider {
+            background: linear-gradient(to right, #000, var(--accent-red));
+        }
+
+        #green-slider {
+            background: linear-gradient(to right, #000, var(--accent-green));
+        }
+
+        #blue-slider {
+            background: linear-gradient(to right, #000, var(--accent-blue));
+        }
+
+        .difference {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-top: 20px;
+            color: #888;
+        }
+
+        #difference-value {
+            color: var(--text-color);
+        }
+
+        .button-container {
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: var(--dark-bg);
+            background-color: var(--text-color);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            background-color: #ccc;
+            transform: translateY(-2px);
+        }
+
+        .results-container {
+            padding: 40px;
+            background-color: var(--dark-light-bg);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+        
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .results-table th, .results-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #444;
+        }
+
+        .results-table th {
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .results-table td {
+            color: #ccc;
+        }
+
+        .color-swatch-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .color-swatch {
+            width: 40px;
+            height: 40px;
+            border-radius: 5px;
+            border: 1px solid #555;
+        }
+
+        .avg-results {
+            margin-top: 30px;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+        
+    </style>
+        <script src="submitToForm.js"></script>
+        <script src="nickname.js"></script>
+
+</head>
+<body>
+
+    <div class="container" id="training-app">
+        <h1>RGB Color Trainer 🎨</h1>
+        <p class="progress" id="progress-text"></p>
+
+        <div class="color-display-container">
+            <div>
+                <div class="color-box" id="test-color-box"></div>
+                <div class="color-label">Test Color</div>
+            </div>
+            <div>
+                <div class="color-box" id="user-color-box"></div>
+                <div class="color-label">Your Color</div>
+            </div>
+        </div>
+
+        <div class="slider-container">
+            <div class="slider-label">
+                <span>Red: <span id="red-value">0</span></span>
+            </div>
+            <input type="range" id="red-slider" min="0" max="255" value="0">
+        </div>
+
+        <div class="slider-container">
+            <div class="slider-label">
+                <span>Green: <span id="green-value">0</span></span>
+            </div>
+            <input type="range" id="green-slider" min="0" max="255" value="0">
+        </div>
+
+        <div class="slider-container">
+            <div class="slider-label">
+                <span>Blue: <span id="blue-value">0</span></span>
+            </div>
+            <input type="range" id="blue-slider" min="0" max="255" value="0">
+        </div>
+
+        <div class="difference">
+            Perceived Difference: <span id="difference-value">Calculating...</span>
+        </div>
+        
+        <div class="button-container">
+            <button id="next-button">Next Color</button>
+        </div>
+    </div>
+
+    <div class="container results-container" id="results-page" style="display:none;">
+        <h1>Results 🏆for <span id="nickname" style="color: yellow;"></span></h1>
+        <p>Here are your results for the color training exercises.</p>
+        <table class="results-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Test Color Sample</th>
+                    <th>Test Color RGB</th>
+                    <th>Your Color Sample</th>
+                    <th>Your Color RGB</th>
+                    <th>Difference</th>
+                    <th>Adjustments</th>
+                    <th>Time (s)</th>
+                </tr>
+            </thead>
+            <tbody id="results-table-body">
+            </tbody>
+        </table>
+        <div class="avg-results">
+            <p>Average Difference: <span id="avg-diff"></span></p>
+            <p>Average Adjustments: <span id="avg-adjustments"></span></p>
+            <p>Average Time: <span id="avg-time"></span>s</p>
+        </div>
+    </div>
+
+    <script>
+   // Convert HSL to RGB array [r, g, b]
+    function hslToRgb(h, s, l) {
+      s /= 100;
+      l /= 100;
+      const k = n => (n + h / 30) % 12;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+      return [
+        Math.round(255 * f(0)),
+        Math.round(255 * f(8)),
+        Math.round(255 * f(4))
+      ];
+    }
+
+    // Generate 100 distinctive RGB colors using Golden Ratio distribution
+    function generate100Colors() {
+      const colors = [];
+      const goldenRatio = 0.618033988749895;
+      let h = 0.1; // Starting hue seed
+
+      for (let i = 0; i < 100; i++) {
+        h = (h + goldenRatio) % 1;
+        // Vary lightness and saturation across iterations to prevent perceptual clustering
+        const s = 65 + (i % 4) * 8; // 65% to 89%
+        const l = 40 + (i % 3) * 15; // 40% to 70%
+        colors.push(hslToRgb(h * 360, s, l));
+      }
+      return colors;
+    }
+
+    // Fisher-Yates shuffle to pick a random subset without mutation
+    function selectSet(numColors, colorArray) {
+      const copy = [...colorArray];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy.slice(0, Math.min(numColors, colorArray.length));
+    }
+
+        const basePalette = generate100Colors();
+        const testColors = selectSet(5, basePalette); 
+
+        // moved from static below to dynamic above
+        /*
+        const testColors = [
+            [255, 69, 0],   // Orange-Red
+            [0, 191, 255],  // Deep Sky Blue
+            [255, 215, 0],  // Gold
+            [138, 43, 226], // Blue-Violet
+            [255, 105, 180]  // Hot Pink
+        ];*/
+
+        let currentTest = 0;
+        let testStartTime;
+        let sliderAdjustments = 0;
+        const results = [];
+        const numTests = testColors.length;
+
+        const testColorBox = document.getElementById('test-color-box');
+        const userColorBox = document.getElementById('user-color-box');
+        const redSlider = document.getElementById('red-slider');
+        const greenSlider = document.getElementById('green-slider');
+        const blueSlider = document.getElementById('blue-slider');
+        const redValueSpan = document.getElementById('red-value');
+        const greenValueSpan = document.getElementById('green-value');
+        const blueValueSpan = document.getElementById('blue-value');
+        const differenceValueSpan = document.getElementById('difference-value');
+        const nextButton = document.getElementById('next-button');
+        const progressText = document.getElementById('progress-text');
+        const trainingApp = document.getElementById('training-app');
+        const resultsPage = document.getElementById('results-page');
+        const resultsTableBody = document.getElementById('results-table-body');
+        const avgDiffSpan = document.getElementById('avg-diff');
+        const avgAdjustmentsSpan = document.getElementById('avg-adjustments');
+        const avgTimeSpan = document.getElementById('avg-time');
+
+        // Function to convert RGB to LAB (CIE L*a*b*).
+        function rgbToLab(r, g, b) {
+            let var_R = (r / 255);
+            let var_G = (g / 255);
+            let var_B = (b / 255);
+
+            if (var_R > 0.04045) var_R = Math.pow(((var_R + 0.055) / 1.055), 2.4); else var_R = var_R / 12.92;
+            if (var_G > 0.04045) var_G = Math.pow(((var_G + 0.055) / 1.055), 2.4); else var_G = var_G / 12.92;
+            if (var_B > 0.04045) var_B = Math.pow(((var_B + 0.055) / 1.055), 2.4); else var_B = var_B / 12.92;
+
+            var_R = var_R * 100;
+            var_G = var_G * 100;
+            var_B = var_B * 100;
+
+            const X = var_R * 0.4124 + var_G * 0.3576 + var_B * 0.1805;
+            const Y = var_R * 0.2126 + var_G * 0.7152 + var_B * 0.0722;
+            const Z = var_R * 0.0193 + var_G * 0.1192 + var_B * 0.9505;
+
+            const ref_X = 95.047;
+            const ref_Y = 100.000;
+            const ref_Z = 108.883;
+
+            let var_X = X / ref_X;
+            let var_Y = Y / ref_Y;
+            let var_Z = Z / ref_Z;
+
+            if (var_X > 0.008856) var_X = Math.pow(var_X, (1/3)); else var_X = (7.787 * var_X) + (16 / 116);
+            if (var_Y > 0.008856) var_Y = Math.pow(var_Y, (1/3)); else var_Y = (7.787 * var_Y) + (16 / 116);
+            if (var_Z > 0.008856) var_Z = Math.pow(var_Z, (1/3)); else var_Z = (7.787 * var_Z) + (16 / 116);
+
+            const L = (116 * var_Y) - 16;
+            const a = 500 * (var_X - var_Y);
+            const b_lab = 200 * (var_Y - var_Z);
+
+            return [L, a, b_lab];
+        }
+
+        // Function to calculate the perceptual color difference (Delta E 2000).
+        function deltaE(rgb1, rgb2) {
+            const [L1, a1, b1] = rgbToLab(...rgb1);
+            const [L2, a2, b2] = rgbToLab(...rgb2);
+
+            const dL = L2 - L1;
+            const C1 = Math.sqrt(a1*a1 + b1*b1);
+            const C2 = Math.sqrt(a2*a2 + b2*b2);
+            const dC = C2 - C1;
+            const dH = Math.sqrt(Math.max(0, (a1-a2)*(a1-a2) + (b1-b2)*(b1-b2) - dC*dC));
+
+            const sL = 1;
+            const sC = 1 + 0.045 * C1;
+            const sH = 1 + 0.015 * C1;
+
+            const deltaE = Math.sqrt(Math.pow(dL/sL, 2) + Math.pow(dC/sC, 2) + Math.pow(dH/sH, 2));
+            return deltaE.toFixed(2);
+        }
+
+        function updateColorsAndDifference() {
+            const r = parseInt(redSlider.value);
+            const g = parseInt(greenSlider.value);
+            const b = parseInt(blueSlider.value);
+
+            redValueSpan.textContent = r;
+            greenValueSpan.textContent = g;
+            blueValueSpan.textContent = b;
+            
+            userColorBox.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+
+            const testR = testColors[currentTest][0];
+            const testG = testColors[currentTest][1];
+            const testB = testColors[currentTest][2];
+            
+            const difference = deltaE([testR, testG, testB], [r, g, b]);
+            differenceValueSpan.textContent = difference;
+
+            if (parseFloat(difference) <= 2.5) {
+                setTimeout(() => nextColorTest(), 500);
+            }
+        }
+
+        function initializeTest() {
+            if (currentTest < numTests) {
+                const [r, g, b] = testColors[currentTest];
+                testColorBox.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+                
+                redSlider.value = 0;
+                greenSlider.value = 0;
+                blueSlider.value = 0;
+                updateColorsAndDifference();
+                
+                progressText.textContent = `Test ${currentTest + 1} of ${numTests}`;
+                sliderAdjustments = 0;
+                testStartTime = Date.now();
+                nextButton.disabled = false;
+            } else {
+                showResults();
+            }
+        }
+
+        function nextColorTest() {
+            const r = parseInt(redSlider.value);
+            const g = parseInt(greenSlider.value);
+            const b = parseInt(blueSlider.value);
+            const userColor = [r, g, b];
+            const testColor = testColors[currentTest];
+            const difference = parseFloat(deltaE(testColor, userColor));
+            const timeElapsed = ((Date.now() - testStartTime) / 1000).toFixed(2);
+
+            results.push({
+                testNumber: currentTest + 1,
+                testColor,
+                userColor,
+                difference,
+                adjustments: sliderAdjustments,
+                time: parseFloat(timeElapsed)
+            });
+
+            currentTest++;
+            if (currentTest < numTests) {
+                initializeTest();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            trainingApp.style.display = 'none';
+            resultsPage.style.display = 'block';
+
+            let totalDiff = 0;
+            let totalAdjustments = 0;
+            let totalTime = 0;
+
+            const id = getId();
+            const json = {id, results}; 
+            submitToForm("rgb-test", json);
+            // put in summary
+            document.getElementById("nickname").textContent = `"${id}"`;
+
+            results.forEach((res, index) => {
+                const row = resultsTableBody.insertRow();
+                
+                row.insertCell(0).textContent = res.testNumber;
+                
+                const testColorSampleCell = row.insertCell(1);
+                testColorSampleCell.innerHTML = `<div class="color-swatch" style="background-color: rgb(${res.testColor[0]}, ${res.testColor[1]}, ${res.testColor[2]});"></div>`;
+                row.insertCell(2).textContent = res.testColor.join(', ');
+
+                const userColorSampleCell = row.insertCell(3);
+                userColorSampleCell.innerHTML = `<div class="color-swatch" style="background-color: rgb(${res.userColor[0]}, ${res.userColor[1]}, ${res.userColor[2]});"></div>`;
+                row.insertCell(4).textContent = res.userColor.join(', ');
+
+                row.insertCell(5).textContent = res.difference;
+                row.insertCell(6).textContent = res.adjustments;
+                row.insertCell(7).textContent = res.time;
+
+                totalDiff += res.difference;
+                totalAdjustments += res.adjustments;
+                totalTime += res.time;
+             });
+            
+            const avgRow = resultsTableBody.insertRow();
+            avgRow.style.fontWeight = 'bold';
+            avgRow.insertCell(0).textContent = 'Average';
+            avgRow.insertCell(1).textContent = '';
+            avgRow.insertCell(2).textContent = '';
+            avgRow.insertCell(3).textContent = '';
+            avgRow.insertCell(4).textContent = '';
+            avgRow.insertCell(5).textContent = (totalDiff / numTests).toFixed(2);
+            avgRow.insertCell(6).textContent = (totalAdjustments / numTests).toFixed(2);
+            avgRow.insertCell(7).textContent = (totalTime / numTests).toFixed(2);
+            
+            avgDiffSpan.textContent = (totalDiff / numTests).toFixed(2);
+            avgAdjustmentsSpan.textContent = (totalAdjustments / numTests).toFixed(2);
+            avgTimeSpan.textContent = (totalTime / numTests).toFixed(2);
+        }
+
+        const sliders = [redSlider, greenSlider, blueSlider];
+        sliders.forEach(slider => {
+            slider.addEventListener('input', () => { 
+                sliderAdjustments++; 
+                updateColorsAndDifference(); 
+            });
+        });
+
+        nextButton.addEventListener('click', nextColorTest);
+
+        initializeTest();
+    </script>
+</body>
+</html>

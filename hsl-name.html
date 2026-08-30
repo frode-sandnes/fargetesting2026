@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSL Fargetrener</title>
+    <style>
+        :root {
+            --dark-bg: #1a1a1a;
+            --dark-light-bg: #222;
+            --text-color: #f0f0f0;
+            --accent-color: #007bff;
+            --correct-color: #28a745;
+            --incorrect-color: #dc3545;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background-color: var(--dark-light-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--text-color);
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+
+        p.progress {
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            font-style: italic;
+            color: #ccc;
+        }
+
+        .color-display-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+            margin-bottom: 30px;
+        }
+
+        .color-box {
+            width: 120px;
+            height: 120px;
+            border-radius: 10px;
+            border: 2px solid var(--text-color);
+            transition: background-color 0.3s;
+        }
+
+        .color-label {
+            font-size: 1.1em;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        .options-container {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        
+        .option-group {
+            flex: 1;
+            min-width: 200px;
+            margin: 10px;
+            text-align: left;
+        }
+
+        .option-group h3 {
+            margin-bottom: 10px;
+            color: var(--text-color);
+        }
+
+        .radio-item {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 1em;
+        }
+
+        .radio-item input[type="radio"] {
+            margin-right: 8px;
+        }
+
+        .button-container {
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: var(--dark-bg);
+            background-color: var(--text-color);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            background-color: #ccc;
+            transform: translateY(-2px);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding-top: 50px;
+        }
+
+        .modal-content {
+            background-color: var(--dark-light-bg);
+            margin: auto;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-content h2 {
+            margin-top: 0;
+        }
+
+        .correct { color: var(--correct-color); }
+        .incorrect { color: var(--incorrect-color); }
+        
+        .modal-colors {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .modal-color-item {
+            text-align: center;
+        }
+
+        .results-container {
+            padding: 40px;
+            background-color: var(--dark-light-bg);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .results-table th, .results-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #444;
+        }
+
+        .results-table th {
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .results-table td {
+            color: #ccc;
+        }
+
+        .color-swatch-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .color-swatch {
+            width: 40px;
+            height: 40px;
+            border-radius: 5px;
+            border: 1px solid #555;
+        }
+
+        .avg-results {
+            margin-top: 30px;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+        
+        @media (max-width: 768px) {
+            .options-container {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+
+        <script src="submitToForm.js"></script>
+        <script src="nickname.js"></script>
+    </head>
+<body>
+
+    <div class="container" id="training-app">
+        <h1>HSL Fargetrener 🎨</h1>
+        <p class="progress" id="progress-text">Test 1 av 5</p>
+
+        <div class="color-display-container">
+            <div>
+                <div class="color-box" id="test-color-box"></div>
+                <div class="color-label">Testfarge</div>
+            </div>
+            <div>
+                <div class="color-box" id="user-color-box"></div>
+                <div class="color-label">Ditt valg</div>
+            </div>
+        </div>
+
+        <div class="options-container">
+            <div class="option-group">
+                <h3>Fargetone (Hue)</h3>
+                <div id="hue-options"></div>
+            </div>
+            <div class="option-group">
+                <h3>Metning (Saturation)</h3>
+                <div id="saturation-options"></div>
+            </div>
+            <div class="option-group">
+                <h3>Lysstyrke (Lightness)</h3>
+                <div id="lightness-options"></div>
+            </div>
+        </div>
+        
+        <div class="button-container">
+            <button id="submit-button">Sjekk svar</button>
+        </div>
+    </div>
+
+    <div class="modal" id="feedback-modal">
+        <div class="modal-content">
+            <h2 id="modal-title"></h2>
+            <div class="modal-colors">
+                <div class="modal-color-item">
+                    <div class="color-box" id="modal-correct-color"></div>
+                    <div>Riktig</div>
+                </div>
+                <div class="modal-color-item">
+                    <div class="color-box" id="modal-user-color"></div>
+                    <div>Ditt svar</div>
+                </div>
+            </div>
+            <p id="feedback-text"></p>
+            <p id="correct-answers-text"></p>
+            <button id="next-test-button">Neste test</button>
+        </div>
+    </div>
+
+    <div class="container results-container" id="results-page" style="display:none;">
+        <h1>Resultater 🏆 for <span id="nickname" style="color: yellow;"></span></h1>
+        <p>Her er resultatene dine for fargetreningsøvelsene.</p>
+        <table class="results-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Testfarge</th>
+                    <th>Ditt svar</th>
+                    <th>Riktig svar</th>
+                    <th>Resultat</th>
+                    <th>Justeringer</th>
+                    <th>Tid (s)</th>
+                </tr>
+            </thead>
+            <tbody id="results-table-body">
+            </tbody>
+        </table>
+        <div class="avg-results">
+            <p>Gjennomsnittlig suksessrate: <span id="avg-success-rate"></span></p>
+            <p>Gjennomsnittlig justeringer: <span id="avg-adjustments"></span></p>
+            <p>Gjennomsnittlig tid: <span id="avg-time"></span>s</p>
+        </div>
+    </div>
+
+    <script>
+
+
+/*
+
+            const h = userH ? hueMap[userH] : 0;
+            const s = userS ? saturationMap[userS] : 0;
+            const l = userL ? lightnessMap[userL] : 0;
+
+                       const [r, g, b] = hslToRgb(h, s, l);
+*/
+
+
+ const testColors = []; 
+
+        const hueMap = {
+            "Rød": 0, "Oransje": 30, "Gul": 60, "Grønn": 120, "Cyan": 180, "Blå": 240, "Lilla": 270, "Magenta": 330
+        };
+        const saturationMap = {
+            "Umettet": 5, "Lite mettet": 20, "Moderat mettet": 45, "Mettet": 75, "Fullt mettet": 95
+        };
+        const lightnessMap = {
+            "Mørk": 10, "Halvmørk": 30, "Moderat": 50, "Halvlys": 70, "Lys": 90
+        };
+
+
+// random colors
+    function getRandomValue(obj) 
+        {
+        const values = Object.values(obj);
+        return values[Math.floor(Math.random() * values.length)];
+        }
+    
+    for (let i = 0; i < 5; i++)
+        {
+        let h = getRandomValue(hueMap);
+        let s = getRandomValue(saturationMap);
+        let l = getRandomValue(lightnessMap);
+        testColors.push([h, s, l]);
+//        console.log(h, s, l);
+        }
+
+/*        const testColors = [
+            [255, 69, 0],   // Orange-Red
+            [0, 191, 255],  // Deep Sky Blue
+            [255, 215, 0],  // Gold
+            [138, 43, 226], // Blue-Violet
+            [255, 105, 180]  // Hot Pink
+        ];*/
+
+        const hueDescriptions = ["Rød", "Oransje", "Gul", "Grønn", "Cyan", "Blå", "Lilla", "Magenta"];
+        const saturationDescriptions = ["Umettet", "Lite mettet", "Moderat mettet", "Mettet", "Fullt mettet"];
+        const lightnessDescriptions = ["Mørk", "Halvmørk", "Moderat", "Halvlys", "Lys"];
+        
+        let currentTest = 0;
+        let testStartTime;
+        let sliderAdjustments = 0;
+        const results = [];
+        const numTests = testColors.length;
+        
+        const testColorBox = document.getElementById('test-color-box');
+        const userColorBox = document.getElementById('user-color-box');
+        const progressText = document.getElementById('progress-text');
+        const submitButton = document.getElementById('submit-button');
+        const feedbackModal = document.getElementById('feedback-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalCorrectColor = document.getElementById('modal-correct-color');
+        const modalUserColor = document.getElementById('modal-user-color');
+        const feedbackText = document.getElementById('feedback-text');
+        const correctAnswersText = document.getElementById('correct-answers-text');
+        const nextTestButton = document.getElementById('next-test-button');
+        const trainingApp = document.getElementById('training-app');
+        const resultsPage = document.getElementById('results-page');
+        const resultsTableBody = document.getElementById('results-table-body');
+        const avgSuccessRateSpan = document.getElementById('avg-success-rate');
+        const avgAdjustmentsSpan = document.getElementById('avg-adjustments');
+        const avgTimeSpan = document.getElementById('avg-time');
+        const submitLink = document.getElementById('submit-link');
+
+        function rgbToHsl(r, g, b) {
+            r /= 255; g /= 255; b /= 255;
+            let max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+
+            if (max === min) {
+                h = s = 0;
+            } else {
+                let d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch(max){
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+            return [h * 360, s * 100, l * 100];
+        }
+
+        function hslToRgb(h, s, l) {
+            h /= 360; s /= 100; l /= 100;
+            let r, g, b;
+
+            if (s === 0) {
+                r = g = b = l; // achromatic
+            } else {
+                const hue2rgb = (p, q, t) => {
+                    if (t < 0) t += 1;
+                    if (t > 1) t -= 1;
+                    if (t < 1/6) return p + (q - p) * 6 * t;
+                    if (t < 1/2) return q;
+                    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                    return p;
+                };
+                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                const p = 2 * l - q;
+                r = hue2rgb(p, q, h + 1/3);
+                g = hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1/3);
+            }
+            return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+        }
+
+        function rgbToLab(r, g, b) {
+            let var_R = (r / 255); let var_G = (g / 255); let var_B = (b / 255);
+            if (var_R > 0.04045) var_R = Math.pow(((var_R + 0.055) / 1.055), 2.4); else var_R = var_R / 12.92;
+            if (var_G > 0.04045) var_G = Math.pow(((var_G + 0.055) / 1.055), 2.4); else var_G = var_G / 12.92;
+            if (var_B > 0.04045) var_B = Math.pow(((var_B + 0.055) / 1.055), 2.4); else var_B = var_B / 12.92;
+            var_R = var_R * 100; var_G = var_G * 100; var_B = var_B * 100;
+            const X = var_R * 0.4124 + var_G * 0.3576 + var_B * 0.1805;
+            const Y = var_R * 0.2126 + var_G * 0.7152 + var_B * 0.0722;
+            const Z = var_R * 0.0193 + var_G * 0.1192 + var_B * 0.9505;
+            const ref_X = 95.047; const ref_Y = 100.000; const ref_Z = 108.883;
+            let var_X = X / ref_X; let var_Y = Y / ref_Y; let var_Z = Z / ref_Z;
+            if (var_X > 0.008856) var_X = Math.pow(var_X, (1/3)); else var_X = (7.787 * var_X) + (16 / 116);
+            if (var_Y > 0.008856) var_Y = Math.pow(var_Y, (1/3)); else var_Y = (7.787 * var_Y) + (16 / 116);
+            if (var_Z > 0.008856) var_Z = Math.pow(var_Z, (1/3)); else var_Z = (7.787 * var_Z) + (16 / 116);
+            const L = (116 * var_Y) - 16;
+            const a = 500 * (var_X - var_Y);
+            const b_lab = 200 * (var_Y - var_Z);
+            return [L, a, b_lab];
+        }
+
+        function deltaE(rgb1, rgb2) {
+            const [L1, a1, b1] = rgbToLab(...rgb1);
+            const [L2, a2, b2] = rgbToLab(...rgb2);
+            const dL = L2 - L1;
+            const C1 = Math.sqrt(a1*a1 + b1*b1);
+            const C2 = Math.sqrt(a2*a2 + b2*b2);
+            const dC = C2 - C1;
+            const dH = Math.sqrt(Math.max(0, (a1-a2)*(a1-a2) + (b1-b2)*(b1-b2) - dC*dC));
+            const sL = 1; const sC = 1 + 0.045 * C1; const sH = 1 + 0.015 * C1;
+            const deltaE = Math.sqrt(Math.pow(dL/sL, 2) + Math.pow(dC/sC, 2) + Math.pow(dH/sH, 2));
+            return deltaE.toFixed(2);
+        }
+
+        function getHueDescription(h) {
+            if (h >= 345 || h < 15) return "Rød";
+            if (h >= 15 && h < 45) return "Oransje";
+            if (h >= 45 && h < 75) return "Gul";
+            if (h >= 75 && h < 165) return "Grønn";
+            if (h >= 165 && h < 195) return "Cyan";
+            if (h >= 195 && h < 255) return "Blå";
+            if (h >= 255 && h < 315) return "Lilla";
+            if (h >= 315 && h < 345) return "Magenta";
+            return "Ukjent";
+        }
+
+
+
+        function getSaturationDescription(s) {
+            if (s < 10) return "Umettet";
+            if (s < 30) return "Lite mettet";
+            if (s < 60) return "Moderat mettet";
+            if (s < 90) return "Mettet";
+            return "Fullt mettet";
+        }
+
+          function getLightnessDescription(l) {
+            if (l < 20) return "Mørk";
+            if (l < 40) return "Halvmørk";
+            if (l < 60) return "Moderat";
+            if (l < 80) return "Halvlys";
+            return "Lys";
+        }
+
+
+
+        function getUserHsl() {
+            const userH = document.querySelector('input[name="hue"]:checked')?.value;
+            const userS = document.querySelector('input[name="saturation"]:checked')?.value;
+            const userL = document.querySelector('input[name="lightness"]:checked')?.value;
+            
+            const h = userH ? hueMap[userH] : 0;
+            const s = userS ? saturationMap[userS] : 0;
+            const l = userL ? lightnessMap[userL] : 0;
+
+//console.log(userH,h, getHueDescription(h) ,userS,s,getSaturationDescription(s),userL,l,getLightnessDescription(l) )
+
+            return [h, s, l];
+        }
+
+        function updateUserColor() {
+            const [h, s, l] = getUserHsl();
+            const [r, g, b] = hslToRgb(h, s, l);
+            userColorBox.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+        }
+
+        function setupRadioButtons() {
+            const hueOptionsDiv = document.getElementById('hue-options');
+            hueOptionsDiv.innerHTML = '';
+            hueDescriptions.forEach(desc => {
+                const label = document.createElement('label');
+                label.className = 'radio-item';
+                label.innerHTML = `<input type="radio" name="hue" value="${desc}"> ${desc}`;
+                hueOptionsDiv.appendChild(label);
+            });
+
+            const saturationOptionsDiv = document.getElementById('saturation-options');
+            saturationOptionsDiv.innerHTML = '';
+            saturationDescriptions.forEach(desc => {
+                const label = document.createElement('label');
+                label.className = 'radio-item';
+                label.innerHTML = `<input type="radio" name="saturation" value="${desc}"> ${desc}`;
+                saturationOptionsDiv.appendChild(label);
+            });
+            
+            const lightnessOptionsDiv = document.getElementById('lightness-options');
+            lightnessOptionsDiv.innerHTML = '';
+            lightnessDescriptions.forEach(desc => {
+                const label = document.createElement('label');
+                label.className = 'radio-item';
+                label.innerHTML = `<input type="radio" name="lightness" value="${desc}"> ${desc}`;
+                lightnessOptionsDiv.appendChild(label);
+            });
+
+            document.querySelectorAll('input[type="radio"]').forEach(radio => {
+                radio.addEventListener('change', () => {
+                    sliderAdjustments++;
+                    updateUserColor();
+                });
+            });
+        }
+
+        function initializeTest() {
+            if (currentTest < numTests) {
+//                const [r, g, b] = testColors[currentTest];
+                const hsl = testColors[currentTest];
+                 const [r, g, b] = hslToRgb(...hsl);
+                testColorBox.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+                
+                document.querySelectorAll('input[type="radio"]').forEach(radio => {
+                    radio.checked = false;
+                });
+                
+                userColorBox.style.backgroundColor = 'transparent';
+
+                progressText.textContent = `Test ${currentTest + 1} av ${numTests}`;
+                sliderAdjustments = 0;
+                testStartTime = Date.now();
+                submitButton.style.display = 'block';
+            } else {
+                showResults();
+            }
+        }
+        
+        function checkAnswer() {
+          //  const [r, g, b] = testColors[currentTest];
+          //  const [h, s, l] = rgbToHsl(r, g, b);
+            const [h, s, l] = testColors[currentTest];
+       
+            const correctH = getHueDescription(h);
+            const correctS = getSaturationDescription(s);
+            const correctL = getLightnessDescription(l);
+
+            const userH = document.querySelector('input[name="hue"]:checked')?.value || 'Ikke valgt';
+            const userS = document.querySelector('input[name="saturation"]:checked')?.value || 'Ikke valgt';
+            const userL = document.querySelector('input[name="lightness"]:checked')?.value || 'Ikke valgt';
+            
+            let isCorrect = true;
+            let feedback = [];
+
+            const isHueIrrelevant = (s < 10 || l < 20 || l > 80);
+
+            if (!isHueIrrelevant && userH !== correctH) {
+                isCorrect = false;
+                feedback.push(`Fargetone er feil. Ditt svar: ${userH}, Riktig svar: ${correctH}.`);
+            } else if (isHueIrrelevant) {
+                // Do not mark wrong
+            } else if (userH === correctH) {
+                // Hue is correct and relevant, so we can ignore this.
+            }
+
+            if (userS !== correctS) {
+                isCorrect = false;
+                feedback.push(`Metning er feil. Ditt svar: ${userS}, Riktig svar: ${correctS}.`);
+            }
+            
+            if (userL !== correctL) {
+                isCorrect = false;
+                feedback.push(`Lysstyrke er feil. Ditt svar: ${userL}, Riktig svar: ${correctL}.`);
+            }
+            
+            if (userH === 'Ikke valgt' || userS === 'Ikke valgt' || userL === 'Ikke valgt') {
+                isCorrect = false;
+            }
+
+            const timeElapsed = ((Date.now() - testStartTime) / 1000).toFixed(2);
+            
+            const userHsl = getUserHsl();
+            const userRgb = hslToRgb(...userHsl);
+//            const testRgb = testColors[currentTest];
+            
+         const testRgb = hslToRgb(h, s, l);
+
+            const difference = deltaE(testRgb, userRgb);
+
+            if (isCorrect) {
+                modalTitle.textContent = "Riktig! ✅";
+                modalTitle.className = 'correct';
+//                feedbackText.textContent = `Du valgte riktig HSL-kombinasjon..`;
+                feedbackText.textContent = `Du valgte riktig HSL-kombinasjon. Avstand: ${difference}.`;
+                correctAnswersText.style.display = 'none';
+            } else {
+                modalTitle.textContent = "Feil ❌";
+                modalTitle.className = 'incorrect';
+                feedbackText.textContent = `Avstand: ${difference}.`;
+                correctAnswersText.style.display = 'block';
+                correctAnswersText.innerHTML = `Feilmeldinger:<br>${feedback.join('<br>')}`;
+            }
+
+            modalCorrectColor.style.backgroundColor = `rgb(${testRgb.join(',')})`;
+            modalUserColor.style.backgroundColor = `rgb(${userRgb.join(',')})`;
+            
+            results.push({
+                testNumber: currentTest + 1,
+                correct: isCorrect,
+                time: parseFloat(timeElapsed),
+                adjustments: sliderAdjustments,
+                testColor: testRgb,
+                userColor: userRgb,
+                correctAnswers: { h: correctH, s: correctS, l: correctL },
+                userAnswers: { h: userH, s: userS, l: userL },
+                difference: parseFloat(difference)
+            });
+
+            feedbackModal.style.display = 'block';
+        }
+
+
+        function showResults() {
+            trainingApp.style.display = 'none';
+            resultsPage.style.display = 'block';
+
+            let totalTime = 0;
+            let totalAdjustments = 0;
+            let correctCount = 0;
+
+            const id = getId();
+            const json = {id, results}; 
+            submitToForm("name-test", json);
+            // clear from local store as this is the last test
+            cleanupId();
+            // put in summary
+            document.getElementById("nickname").textContent = `"${id}"`;
+
+
+            results.forEach((res, index) => {
+                const row = resultsTableBody.insertRow();
+                
+                row.insertCell(0).textContent = res.testNumber;
+                
+                const testColorSampleCell = row.insertCell(1);
+                testColorSampleCell.innerHTML = `<div class="color-swatch" style="background-color: rgb(${res.testColor.join(',')});"></div>`;
+
+                const userColorSampleCell = row.insertCell(2);
+                userColorSampleCell.innerHTML = `<div class="color-swatch" style="background-color: rgb(${res.userColor.join(',')});"></div>`;
+
+                const correctCell = row.insertCell(3);
+                correctCell.textContent = `${res.correctAnswers.h}, ${res.correctAnswers.s}, ${res.correctAnswers.l}`;
+
+                const resultCell = row.insertCell(4);
+                resultCell.textContent = res.correct ? 'Riktig' : 'Feil';
+                resultCell.style.color = res.correct ? 'var(--correct-color)' : 'var(--incorrect-color)';
+
+                row.insertCell(5).textContent = res.adjustments;
+                row.insertCell(6).textContent = res.time;
+
+                totalTime += res.time;
+                totalAdjustments += res.adjustments;
+                if (res.correct) {
+                    correctCount++;
+                }
+
+            });
+            
+            avgSuccessRateSpan.textContent = `${((correctCount / numTests) * 100).toFixed(0)}%`;
+            avgAdjustmentsSpan.textContent = (totalAdjustments / numTests).toFixed(2);
+            avgTimeSpan.textContent = (totalTime / numTests).toFixed(2);
+        }
+
+        submitButton.addEventListener('click', checkAnswer);
+        nextTestButton.addEventListener('click', () => {
+            feedbackModal.style.display = 'none';
+            currentTest++;
+            initializeTest();
+        });
+
+        setupRadioButtons();
+        initializeTest();
+    </script>
+</body>
+</html>
