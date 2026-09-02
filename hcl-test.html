@@ -500,9 +500,10 @@
             
             updateSliderBackgrounds();
 
-            if (parseFloat(difference) <= 2.5) {
+            // deactivate automatic forward
+          /*  if (parseFloat(difference) <= 2.5) {
                 setTimeout(() => nextColorTest(), 500);
-            }
+            }*/
         }
 
         function initializeTest() {
@@ -535,6 +536,7 @@
             const l = parseInt(lightnessSlider.value);
             const userHCL = [h, c, l];
             const testHCL = testColors[currentTest];
+       
             const testLab = hclToLab(...testHCL);
             const userLab = hclToLab(...userHCL);
             const difference = parseFloat(deltaE(testLab, userLab));
